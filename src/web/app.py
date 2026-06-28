@@ -167,6 +167,8 @@ def api_status():
             data["elapsed"] = int(time.time() - data["start_time"])
         else:
             data["elapsed"] = 0
+    if _monitor:
+        data["interval"] = _monitor.summary_interval
     return jsonify(data)
 
 

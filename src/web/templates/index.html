@@ -64,6 +64,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <span class="status-label">运行时长</span>
       <span class="status-value" id="elapsed">0 分钟</span>
     </div>
+    <div class="status-row">
+      <span class="status-label">总结间隔</span>
+      <span class="status-value" id="interval">-</span>
+    </div>
   </div>
 
   <div class="stats">
@@ -145,6 +149,8 @@ async function updateStatus() {
 
     const mins = Math.floor((data.elapsed || 0) / 60);
     document.getElementById('elapsed').textContent = mins + ' 分钟';
+    const interval = data.interval || 0;
+    document.getElementById('interval').textContent = Math.floor(interval / 60) + ' 分钟';
     document.getElementById('transcriptCount').textContent = data.transcript_count || 0;
     document.getElementById('summaryCount').textContent = data.summary_count || 0;
     document.getElementById('logCount').textContent = (data.logs || []).length;
