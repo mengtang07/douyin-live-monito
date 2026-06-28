@@ -71,7 +71,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <span class="status-value" id="interval">-</span>
     </div>
     <div class="status-row">
-      <span class="status-label">下次总结</span>
+      <span class="status-label">总结时间</span>
       <span class="status-value" id="nextSummary">--:--</span>
     </div>
   </div>
@@ -181,10 +181,10 @@ async function updateStatus() {
       document.getElementById('btnSummary').disabled = true;
     }
 
-    const secs = data.elapsed || 0;
-    const h = Math.floor(secs / 3600);
-    const m = Math.floor((secs % 3600) / 60);
-    const s = secs % 60;
+    elapsedSecs = data.elapsed || 0;
+    const h = Math.floor(elapsedSecs / 3600);
+    const m = Math.floor((elapsedSecs % 3600) / 60);
+    const s = elapsedSecs % 60;
     document.getElementById('elapsed').textContent =
       String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
     const interval = data.interval || 0;
@@ -204,18 +204,19 @@ async function updateStatus() {
   } catch (e) {}
 }
 
+let elapsedSecs = 0;
+
 function startTick() {
   if (tickTimer) return;
   tickTimer = setInterval(() => {
     // 运行时长每秒+1
-    const el = document.getElementById('elapsed');
-    if (el.textContent !== '00:00:00') {
-      const parts = el.textContent.split(':').map(Number);
-      let total = parts[0]*3600 + parts[1]*60 + parts[2] + 1;
-      const h = Math.floor(total/3600);
-      const m = Math.floor((total%3600)/60);
-      const s = total%60;
-      el.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    if (elapsedSecs > 0) {
+      elapsedSecs++;
+      const h = Math.floor(elapsedSecs/3600);
+      const m = Math.floor((elapsedSecs%3600)/60);
+      const s = elapsedSecs%60;
+      document.getElementById('elapsed').textContent =
+        String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
     }
     // 总结时间每秒更新
     if (nextSummarySecs > 0) {
