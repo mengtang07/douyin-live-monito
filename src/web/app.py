@@ -179,9 +179,8 @@ def api_summary():
 
     summary = _monitor.summarizer.summarize_interval(combined_text)
     if summary:
-        elapsed = int(time.time() - _monitor._start_time)
-        minutes = elapsed // 60
-        title = f"直播阶段性总结 (第{_monitor._summary_count}次·{minutes}分钟·手动)"
+        now = time.strftime("%H:%M")
+        title = f"直播阶段性总结 (第{_monitor._summary_count}次·{now}·手动)"
         _monitor.notifier.send_summary(title, summary, is_final=False)
         _log_callback(f"手动总结已推送: {title}")
         with _status_lock:

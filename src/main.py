@@ -151,9 +151,8 @@ class LiveMonitor:
 
             summary = self.summarizer.summarize_interval(combined_text)
             if summary:
-                elapsed = int(time.time() - self._start_time)
-                minutes = elapsed // 60
-                title = f"直播阶段性总结 (第{self._summary_count}次·{minutes}分钟)"
+                now = time.strftime("%H:%M")
+                title = f"直播阶段性总结 (第{self._summary_count}次·{now})"
                 self.notifier.send_summary(title, summary, is_final=False)
                 logger.info(f"阶段性总结已推送: {title}")
 
