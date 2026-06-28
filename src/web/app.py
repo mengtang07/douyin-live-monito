@@ -159,6 +159,38 @@ def api_stop():
     return jsonify({"ok": ok, "msg": msg})
 
 
+@app.route("/api/summary", methods=["POST"])
+def api_summary():
+    """手动触发总结（不结束监控）"""
+    if not _status["running"] or not _monitor:
+        return jsonify({"ok": False, "msg": "监控未在运行"})
+
+    with _monitor._buffer_lock:
+        if not _monitor._transcript_buffer and not _monitor._all_transcripts:
+            return jsonify({"ok": False, "msg": "暂无识别内容，无法总结"})
+        texts = _monitor._transcript_buffer.copy()
+        _monitor._transcript_buffer.clear()
+
+    if not texts:
+        texts = _monitor._all_transcripts[-20:]  # 取最近20条
+
+    combined_text = "\n".join(texts)
+    _monitor._summary_count += 1
+
+    summary = _monitor.summarizer.summarize_interval(combined_text)
+    if summary:
+        elapsed = int(time.time() - _monitor._start_time)
+        minutes = elapsed // 60
+        title = f"直播阶段性总结 (第{_monitor._summary_count}次·{minutes}分钟·手动)"
+        _monitor.notifier.send_summary(title, summary, is_final=False)
+        _log_callback(f"手动总结已推送: {title}")
+        with _status_lock:
+            _status["summary_count"] = _monitor._summary_count
+        return jsonify({"ok": True, "msg": "总结已发送"})
+    else:
+        return jsonify({"ok": False, "msg": "总结生成失败"})
+
+
 @app.route("/api/status")
 def api_status():
     with _status_lock:
