@@ -71,7 +71,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <span class="status-value" id="interval">-</span>
     </div>
     <div class="status-row">
-      <span class="status-label">距下次总结</span>
+      <span class="status-label">总结时间</span>
       <span class="status-value" id="nextSummary">-</span>
     </div>
   </div>
@@ -179,9 +179,10 @@ async function updateStatus() {
     const interval = data.interval || 0;
     document.getElementById('interval').textContent = Math.floor(interval / 60) + ' 分钟';
     const next = data.next_summary || 0;
-    const nm = Math.floor(next / 60);
-    const ns = next % 60;
-    document.getElementById('nextSummary').textContent = nm + '分' + ns + '秒';
+    const nextTime = new Date(Date.now() + next * 1000);
+    const hh = String(nextTime.getHours()).padStart(2,'0');
+    const mm = String(nextTime.getMinutes()).padStart(2,'0');
+    document.getElementById('nextSummary').textContent = hh + ':' + mm;
     document.getElementById('transcriptCount').textContent = data.transcript_count || 0;
     document.getElementById('summaryCount').textContent = data.summary_count || 0;
     document.getElementById('logCount').textContent = (data.logs || []).length;
