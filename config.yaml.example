@@ -25,7 +25,7 @@ summarize:
   # 总结模型
   model: "gpt-4o-mini"
   # 总结间隔(秒), 每隔多久做一次阶段性总结
-  interval: 600
+  interval: 3600
   # 是否在直播结束后做完整总结
   final_summary: true
 

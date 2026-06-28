@@ -80,6 +80,7 @@ class LiveMonitor:
         else:
             logger.info(f"模式: 直播流抓取 | 地址: {self.config['stream']['live_url']}")
         logger.info(f"总结间隔: {self.summary_interval}秒")
+        logger.info("输入 q + 回车 可随时结束并生成总结")
         logger.info("=" * 50)
 
         self._running = True
@@ -90,6 +91,10 @@ class LiveMonitor:
 
         summary_thread = threading.Thread(target=self._summary_loop, daemon=True)
         summary_thread.start()
+
+        # 监听键盘输入，输入 q 结束
+        input_thread = threading.Thread(target=self._listen_input, daemon=True)
+        input_thread.start()
 
         signal.signal(signal.SIGINT, self._handle_shutdown)
         signal.signal(signal.SIGTERM, self._handle_shutdown)
@@ -168,6 +173,20 @@ class LiveMonitor:
             title = f"直播完整总结报告 (总时长{minutes}分钟)"
             self.notifier.send_summary(title, summary, is_final=True)
             logger.info("最终总结已推送")
+
+    def _listen_input(self):
+        """监听键盘输入，输入 q 结束监控"""
+        while self._running:
+            try:
+                cmd = input().strip().lower()
+                if cmd == "q":
+                    logger.info("收到手动结束指令")
+                    self.stop()
+                    break
+            except EOFError:
+                break
+            except Exception:
+                pass
 
     def _handle_shutdown(self, signum, frame):
         logger.info(f"收到信号{signum}，准备关闭...")
