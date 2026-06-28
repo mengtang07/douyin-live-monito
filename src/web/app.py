@@ -200,6 +200,11 @@ def api_status():
             data["elapsed"] = 0
     if _monitor:
         data["interval"] = _monitor.summary_interval
+        # 计算距离下次总结的剩余秒数
+        if data["running"] and data["elapsed"] > 0:
+            data["next_summary"] = _monitor.summary_interval - (data["elapsed"] % _monitor.summary_interval)
+        else:
+            data["next_summary"] = _monitor.summary_interval
     return jsonify(data)
 
 

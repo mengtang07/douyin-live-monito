@@ -64,11 +64,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
     </div>
     <div class="status-row">
       <span class="status-label">运行时长</span>
-      <span class="status-value" id="elapsed">0 分钟</span>
+      <span class="status-value" id="elapsed">00:00:00</span>
     </div>
     <div class="status-row">
       <span class="status-label">总结间隔</span>
       <span class="status-value" id="interval">-</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">距下次总结</span>
+      <span class="status-value" id="nextSummary">-</span>
     </div>
   </div>
 
@@ -166,10 +170,18 @@ async function updateStatus() {
       document.getElementById('btnSummary').disabled = true;
     }
 
-    const mins = Math.floor((data.elapsed || 0) / 60);
-    document.getElementById('elapsed').textContent = mins + ' 分钟';
+    const secs = data.elapsed || 0;
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    document.getElementById('elapsed').textContent =
+      String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
     const interval = data.interval || 0;
     document.getElementById('interval').textContent = Math.floor(interval / 60) + ' 分钟';
+    const next = data.next_summary || 0;
+    const nm = Math.floor(next / 60);
+    const ns = next % 60;
+    document.getElementById('nextSummary').textContent = nm + '分' + ns + '秒';
     document.getElementById('transcriptCount').textContent = data.transcript_count || 0;
     document.getElementById('summaryCount').textContent = data.summary_count || 0;
     document.getElementById('logCount').textContent = (data.logs || []).length;
