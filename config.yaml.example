@@ -29,7 +29,7 @@ summarize:
   # API 基础地址
   base_url: "https://api.deepseek.com/v1"
   # 总结模型
-  model: "deepseek-v4-pro"
+  model: "deepseek-v4-flash"
   # 总结间隔(秒)
   interval: 3600
   # 结束时是否生成完整总结
