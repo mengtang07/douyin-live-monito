@@ -80,7 +80,7 @@ class LiveMonitor:
         else:
             logger.info(f"模式: 直播流抓取 | 地址: {self.config['stream']['live_url']}")
         logger.info(f"总结间隔: {self.summary_interval}秒")
-        logger.info("输入 1 + 回车 可随时结束并生成总结")
+        logger.info("输入 q + 回车 可随时结束并生成总结")
         logger.info("=" * 50)
 
         self._running = True
@@ -175,11 +175,11 @@ class LiveMonitor:
             logger.info("最终总结已推送")
 
     def _listen_input(self):
-        """监听键盘输入，输入 1 结束监控"""
+        """监听键盘输入，输入 q 结束监控"""
         while self._running:
             try:
-                cmd = input().strip()
-                if cmd == "1":
+                cmd = input().strip().lower()
+                if cmd == "q":
                     logger.info("收到手动结束指令")
                     self.stop()
                     break
