@@ -24,12 +24,12 @@ whisper:
   language: "zh"
 
 summarize:
-  # API Key
-  api_key: "your-api-key"
+  # DeepSeek API Key
+  api_key: "your-deepseek-api-key"
   # API 基础地址
-  base_url: "https://api.xiaomimimo.com/v1"
+  base_url: "https://api.deepseek.com/v1"
   # 总结模型
-  model: "mimo-v2.5"
+  model: "deepseek-chat"
   # 总结间隔(秒)
   interval: 3600
   # 结束时是否生成完整总结
