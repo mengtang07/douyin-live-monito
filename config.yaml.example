@@ -1,0 +1,42 @@
+# ==========================================
+# 抖音直播监控智能体 - 配置文件
+# 复制此文件为 config.yaml 并填入实际值
+# ==========================================
+
+stream:
+  # 抖音直播间URL (完整链接)
+  # 示例: https://live.douyin.com/123456789
+  live_url: "https://live.douyin.com/YOUR_ROOM_ID"
+  
+  # 音频分片时长(秒), 每隔多久发送一次语音识别
+  chunk_duration: 30
+
+whisper:
+  # OpenAI API Key (用于语音识别)
+  api_key: "sk-your-openai-api-key"
+  # 识别模型
+  model: "whisper-1"
+  # 语言 (zh=中文, en=英文, 不设置则自动检测)
+  language: "zh"
+
+summarize:
+  # OpenAI API Key (用于AI总结, 可以和whisper共用)
+  api_key: "sk-your-openai-api-key"
+  # 总结模型
+  model: "gpt-4o-mini"
+  # 总结间隔(秒), 每隔多久做一次阶段性总结
+  interval: 600
+  # 是否在直播结束后做完整总结
+  final_summary: true
+
+feishu:
+  # 飞书机器人 Webhook URL
+  # 在飞书群 -> 设置 -> 群机器人 -> 添加机器人 -> 自定义机器人 获取
+  webhook_url: "https://open.feishu.cn/open-apis/bot/v2/hook/your-webhook-token"
+  # 可选: 签名密钥 (如果启用了签名校验)
+  secret: ""
+
+logging:
+  level: "INFO"
+  # 日志文件路径 (留空则只输出到控制台)
+  file: "logs/monitor.log"

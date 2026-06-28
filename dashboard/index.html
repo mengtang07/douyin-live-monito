@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抖音直播监控智能体 - 演示面板</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+    --text: #e4e4e7; --muted: #8b8fa3; --accent: #6366f1;
+    --green: #22c55e; --red: #ef4444; --amber: #f59e0b; --cyan: #06b6d4;
+    --pink: #ec4899;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  /* Header */
+  .header { text-align: center; padding: 40px 0 24px; }
+  .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .header p { color: var(--muted); margin-top: 8px; font-size: 15px; }
+
+  /* Architecture Flow */
+  .arch { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 24px 0; flex-wrap: wrap; }
+  .arch-node { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; text-align: center; min-width: 120px; transition: all 0.3s; }
+  .arch-node.active { border-color: var(--accent); box-shadow: 0 0 20px rgba(99,102,241,0.15); }
+  .arch-node .icon { font-size: 24px; display: block; margin-bottom: 4px; }
+  .arch-node .label { font-size: 12px; color: var(--muted); }
+  .arch-arrow { color: var(--muted); font-size: 20px; }
+
+  /* Grid Layout */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+  /* Panels */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .panel-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .panel-head .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .panel-head .dot.green { background: var(--green); }
+  .panel-head .dot.amber { background: var(--amber); }
+  .panel-head .dot.red { background: var(--red); }
+  .panel-head h3 { font-size: 14px; font-weight: 600; }
+  .panel-body { padding: 16px 18px; max-height: 360px; overflow-y: auto; }
+
+  /* Transcript Log */
+  .log-entry { padding: 8px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.4s ease; }
+  .log-entry:last-child { border-bottom: none; }
+  .log-time { font-size: 11px; color: var(--accent); font-family: monospace; }
+  .log-text { font-size: 13px; margin-top: 2px; }
+
+  /* Summary Card */
+  .summary-card { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15); border-radius: 8px; padding: 14px; margin-bottom: 12px; animation: fadeIn 0.5s ease; }
+  .summary-card h4 { font-size: 13px; color: var(--accent); margin-bottom: 8px; }
+  .summary-card p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+  /* Feishu Preview */
+  .feishu-card { background: #fff; color: #1a1a1a; border-radius: 10px; overflow: hidden; margin-bottom: 12px; animation: slideUp 0.5s ease; }
+  .feishu-header { background: var(--accent); color: white; padding: 12px 16px; font-size: 14px; font-weight: 600; }
+  .feishu-body { padding: 14px 16px; font-size: 13px; line-height: 1.7; }
+  .feishu-body strong { color: #111; }
+  .feishu-footer { padding: 8px 16px; border-top: 1px solid #eee; font-size: 11px; color: #999; }
+
+  /* Controls */
+  .controls { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
+  .btn { padding: 10px 28px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #5558e6; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+  /* Stats Bar */
+  .stats { display: flex; gap: 24px; justify-content: center; margin-top: 20px; }
+  .stat { text-align: center; }
+  .stat-val { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Pulse animation for active nodes */
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .pulsing { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  .full-width { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>抖音直播监控智能体</h1>
+    <p>实时捕获直播音频 - AI 语音转文字 - 智能总结 - 飞书推送</p>
+  </div>
+
+  <!-- Architecture Flow -->
+  <div class="arch" id="arch">
+    <div class="arch-node" id="node-capture"><span class="icon">🎙️</span><span class="label">直播音频捕获</span></div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-node" id="node-transcribe"><span class="icon">📝</span><span class="label">Whisper 语音识别</span></div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-node" id="node-summarize"><span class="icon">🤖</span><span class="label">GPT 智能总结</span></div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-node" id="node-notify"><span class="icon">📨</span><span class="label">飞书消息推送</span></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="stat-chunks" style="color:var(--cyan)">0</div><div class="stat-label">音频分片</div></div>
+    <div class="stat"><div class="stat-val" id="stat-transcripts" style="color:var(--green)">0</div><div class="stat-label">识别片段</div></div>
+    <div class="stat"><div class="stat-val" id="stat-summaries" style="color:var(--accent)">0</div><div class="stat-label">生成总结</div></div>
+    <div class="stat"><div class="stat-val" id="stat-feishu" style="color:var(--pink)">0</div><div class="stat-label">飞书推送</div></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn btn-primary" id="btn-start" onclick="startDemo()">启动模拟演示</button>
+    <button class="btn btn-ghost" id="btn-reset" onclick="resetDemo()">重置</button>
+  </div>
+
+  <!-- Panels -->
+  <div class="grid">
+    <!-- Transcript Panel -->
+    <div class="panel">
+      <div class="panel-head"><span class="dot green" id="dot-transcript"></span><h3>实时语音识别</h3></div>
+      <div class="panel-body" id="transcript-log"></div>
+    </div>
+
+    <!-- Summary Panel -->
+    <div class="panel">
+      <div class="panel-head"><span class="dot amber" id="dot-summary"></span><h3>AI 智能总结</h3></div>
+      <div class="panel-body" id="summary-log"></div>
+    </div>
+
+    <!-- Feishu Preview -->
+    <div class="panel full-width">
+      <div class="panel-head"><span class="dot green" id="dot-feishu"></span><h3>飞书消息预览</h3></div>
+      <div class="panel-body" id="feishu-preview"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Mock data - simulated Chinese livestream transcript segments
+const mockTranscripts = [
+  { time: "00:15", text: "家人们大家好，欢迎来到直播间！今天给大家带来的是夏季新款连衣裙，真的超级好看。" },
+  { time: "00:45", text: "这款裙子是冰丝面料的，穿上去特别凉快，夏天穿完全不会热。原价299，今天直播间专属价只要129！" },
+  { time: "01:20", text: "我们看一下细节啊，这个走线非常工整，而且是修身版型，显瘦效果特别好。S码到XXL都有。" },
+  { time: "02:00", text: "刚才上架的200件已经卖出去150多件了，要的宝宝赶紧拍，库存不多了。扣1我给你们改价。" },
+  { time: "02:45", text: "好的，下一个产品是我们今天的重磅炸弹——这款防晒衣。UPF50+的专业防晒，户外运动完全够用。" },
+  { time: "03:30", text: "这个防晒衣是有检测报告的，不是那种随便写个数字的。面料是锦纶的，又轻又透气。" },
+  { time: "04:10", text: "现在拍防晒衣的前100名送一个同色系的防晒帽，真的太划算了。两个加一起才89块钱。" },
+  { time: "05:00", text: "感谢大哥送的火箭！谢谢谢谢。我们继续看产品，下一个是一双凉鞋，今年特别流行的厚底款。" },
+  { time: "05:45", text: "这双鞋的鞋底是橡胶的，防滑耐磨。鞋面是超纤皮的，好打理。36到44码都有，男女同款。" },
+  { time: "06:30", text: "直播间价格99一双，买两双减20。很多宝宝已经下单了，好评率百分之九十九。" },
+  { time: "07:15", text: "好，我们来做一波抽奖。在线的宝宝扣个666，我随机抽三位送我们家的爆款T恤一件。" },
+  { time: "08:00", text: "恭喜这三位宝宝中奖！请私信我领取。我们继续上产品，接下来这款是我们的王牌——冰丝四件套。" },
+  { time: "08:50", text: "这个四件套是A类母婴级的面料，家里有宝宝的可以放心用。裸睡级的触感，滑滑的凉凉的。" },
+  { time: "09:30", text: "1.8米床的四件套，外面卖599，今天直播间199拿走。还送两个同款枕套，限量300套。" },
+  { time: "10:10", text: "好，今天的直播差不多要到尾声了。感谢所有宝宝的陪伴和下单，我们明天同一时间继续！" },
+];
+
+const mockSummaries = [
+  {
+    title: "阶段性总结 (第5分钟)",
+    content: `**核心内容**：主播主要推广夏季女装和防晒产品\n\n**重点商品**：\n- 冰丝连衣裙：原价299，直播价129元，已售150+件\n- 专业防晒衣：UPF50+，前100名送防晒帽，仅89元\n\n**互动亮点**：观众抢购氛围热烈，连衣裙库存紧张\n\n**销售节奏**：主推爆款引流款，价格优势明显`
+  },
+  {
+    title: "阶段性总结 (第10分钟)",
+    content: `**核心内容**：继续推广鞋类和家纺产品，穿插抽奖互动\n\n**重点商品**：\n- 厚底凉鞋：男女同款，99元/双，买二减20\n- 冰丝四件套：A类母婴级面料，199元送枕套，限300套\n\n**互动亮点**：在线抽奖送T恤，3位观众中奖\n\n**主播风格**：亲和力强，善于制造紧迫感`
+  },
+];
+
+const mockFinalSummary = {
+  title: "直播完整总结报告 (总时长约10分钟)",
+  content: `**直播主题**：夏季服饰及家居好物专场\n\n**核心数据**：\n- 直播时长：约10分钟\n- 上架商品：5款\n- 涵盖品类：女装、鞋类、家纺、防晒\n\n**商品清单**：\n1. 冰丝连衣裙 - 129元 (原价299)\n2. 专业防晒衣+帽套装 - 89元\n3. 厚底凉鞋 - 99元/双\n4. 冰丝四件套 - 199元 (送枕套)\n\n**互动事件**：\n- 弹幕抽奖送T恤 x3\n- 收到礼物打赏\n\n**主播风格**：节奏紧凑，价格锚点清晰，善用限时限量策略\n\n**整体评价**：选品覆盖夏季刚需，价格竞争力强，直播间转化氛围好`
+};
+
+// State
+let running = false;
+let stats = { chunks: 0, transcripts: 0, summaries: 0, feishu: 0 };
+let timeouts = [];
+
+function activateNode(id) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.add('active', 'pulsing'); setTimeout(() => el.classList.remove('pulsing'), 2000); }
+}
+
+function deactivateAll() {
+  document.querySelectorAll('.arch-node').forEach(n => n.classList.remove('active', 'pulsing'));
+}
+
+function updateStats() {
+  document.getElementById('stat-chunks').textContent = stats.chunks;
+  document.getElementById('stat-transcripts').textContent = stats.transcripts;
+  document.getElementById('stat-summaries').textContent = stats.summaries;
+  document.getElementById('stat-feishu').textContent = stats.feishu;
+}
+
+function addTranscript(entry) {
+  const log = document.getElementById('transcript-log');
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.innerHTML = `<div class="log-time">${entry.time}</div><div class="log-text">${entry.text}</div>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  stats.transcripts++;
+  stats.chunks++;
+  updateStats();
+}
+
+function addSummary(summary) {
+  const log = document.getElementById('summary-log');
+  const div = document.createElement('div');
+  div.className = 'summary-card';
+  div.innerHTML = `<h4>${summary.title}</h4><p>${summary.content.replace(/\n/g, '<br>')}</p>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  stats.summaries++;
+  updateStats();
+}
+
+function addFeishuPreview(summary) {
+  const preview = document.getElementById('feishu-preview');
+  const div = document.createElement('div');
+  div.className = 'feishu-card';
+  const isFinal = summary.title.includes('完整');
+  const headerColor = isFinal ? 'var(--green)' : 'var(--accent)';
+  const emoji = isFinal ? '📋' : '📝';
+  div.innerHTML = `
+    <div class="feishu-header" style="background:${headerColor}">${emoji} ${summary.title}</div>
+    <div class="feishu-body">${summary.content.replace(/\n/g, '<br>')}</div>
+    <div class="feishu-footer">🤖 由直播监控智能体自动生成 | ${new Date().toLocaleString('zh-CN')}</div>
+  `;
+  preview.appendChild(div);
+  preview.scrollTop = preview.scrollHeight;
+  stats.feishu++;
+  updateStats();
+}
+
+function startDemo() {
+  if (running) return;
+  running = true;
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-start').textContent = '演示运行中...';
+
+  // Simulate transcript entries appearing
+  mockTranscripts.forEach((entry, i) => {
+    const t = setTimeout(() => {
+      if (!running) return;
+      activateNode('node-capture');
+      setTimeout(() => activateNode('node-transcribe'), 300);
+      addTranscript(entry);
+    }, i * 1500);
+    timeouts.push(t);
+  });
+
+  // First summary at 7s
+  const t1 = setTimeout(() => {
+    if (!running) return;
+    activateNode('node-summarize');
+    setTimeout(() => activateNode('node-notify'), 500);
+    addSummary(mockSummaries[0]);
+    addFeishuPreview(mockSummaries[0]);
+  }, 7000);
+  timeouts.push(t1);
+
+  // Second summary at 14s
+  const t2 = setTimeout(() => {
+    if (!running) return;
+    activateNode('node-summarize');
+    setTimeout(() => activateNode('node-notify'), 500);
+    addSummary(mockSummaries[1]);
+    addFeishuPreview(mockSummaries[1]);
+  }, 14000);
+  timeouts.push(t2);
+
+  // Final summary at 22s
+  const t3 = setTimeout(() => {
+    if (!running) return;
+    activateNode('node-summarize');
+    setTimeout(() => activateNode('node-notify'), 500);
+    addSummary(mockFinalSummary);
+    addFeishuPreview(mockFinalSummary);
+
+    // Done
+    setTimeout(() => {
+      deactivateAll();
+      document.getElementById('btn-start').disabled = false;
+      document.getElementById('btn-start').textContent = '重新演示';
+      running = false;
+    }, 2000);
+  }, 22000);
+  timeouts.push(t3);
+}
+
+function resetDemo() {
+  running = false;
+  timeouts.forEach(t => clearTimeout(t));
+  timeouts = [];
+  stats = { chunks: 0, transcripts: 0, summaries: 0, feishu: 0 };
+  updateStats();
+  deactivateAll();
+  document.getElementById('transcript-log').innerHTML = '';
+  document.getElementById('summary-log').innerHTML = '';
+  document.getElementById('feishu-preview').innerHTML = '';
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('btn-start').textContent = '启动模拟演示';
+}
+</script>
+</body>
+</html>
