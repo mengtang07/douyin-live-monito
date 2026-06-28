@@ -64,6 +64,7 @@ class LiveMonitor:
         self._buffer_lock = threading.Lock()
         self._start_time: float = 0
         self._running = False
+        self._summary_count: int = 0
 
         self.capture.on_chunk(self._on_audio_chunk)
 
@@ -141,12 +142,13 @@ class LiveMonitor:
                 self._transcript_buffer.clear()
 
             combined_text = "\n".join(texts)
-            elapsed = int(time.time() - self._start_time)
-            minutes = elapsed // 60
+            self._summary_count += 1
 
             summary = self.summarizer.summarize_interval(combined_text)
             if summary:
-                title = f"直播阶段性总结 (第{minutes}分钟)"
+                elapsed = int(time.time() - self._start_time)
+                minutes = elapsed // 60
+                title = f"直播阶段性总结 (第{self._summary_count}次·{minutes}分钟)"
                 self.notifier.send_summary(title, summary, is_final=False)
                 logger.info(f"阶段性总结已推送: {title}")
 
