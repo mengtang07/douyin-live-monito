@@ -107,13 +107,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 let polling = null;
 let nextSummarySecs = 0;
 let tickTimer = null;
+let summaryInterval = 0;
+let manualSummaryAt = 0;
 
 function updateNextTime() {
-  const t = new Date(Date.now() + nextSummarySecs * 1000);
-  const hh = String(t.getHours()).padStart(2,'0');
-  const mm = String(t.getMinutes()).padStart(2,'0');
-  const ss = String(t.getSeconds()).padStart(2,'0');
-  document.getElementById('nextSummary').textContent = hh + ':' + mm + ':' + ss;
+  const naturalElapsed = summaryInterval > 0 ? (elapsedSecs % summaryInterval) : 0;
+  const sinceManual = elapsedSecs - manualSummaryAt;
+  const cycleElapsed = Math.min(naturalElapsed, sinceManual);
+  const h = Math.floor(cycleElapsed / 3600);
+  const m = Math.floor((cycleElapsed % 3600) / 60);
+  const s = cycleElapsed % 60;
+  document.getElementById('nextSummary').textContent =
+    String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
 
 async function startMonitor() {
@@ -122,6 +127,7 @@ async function startMonitor() {
   const data = await res.json();
   if (data.ok) {
     document.getElementById('btnStop').disabled = false;
+    manualSummaryAt = 0;
     startPolling();
   } else {
     alert(data.msg);
@@ -146,6 +152,7 @@ async function sendSummary() {
   const res = await fetch('/api/summary', { method: 'POST' });
   const data = await res.json();
   if (!data.ok) alert(data.msg);
+  else manualSummaryAt = elapsedSecs;
   btn.textContent = '📋 发送总结';
   if (document.getElementById('btnStop').disabled === false) {
     btn.disabled = false;
@@ -188,8 +195,8 @@ async function updateStatus() {
     const s = elapsedSecs % 60;
     document.getElementById('elapsed').textContent =
       String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-    const interval = data.interval || 0;
-    document.getElementById('interval').textContent = Math.floor(interval / 60) + ' 分钟';
+    summaryInterval = data.interval || 0;
+    document.getElementById('interval').textContent = Math.floor(summaryInterval / 60) + ' 分钟';
     nextSummarySecs = data.next_summary || 0;
     updateNextTime();
     document.getElementById('transcriptCount').textContent = data.transcript_count || 0;
@@ -218,10 +225,7 @@ function startTick() {
       const s = elapsedSecs%60;
       document.getElementById('elapsed').textContent =
         String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-    }
-    // 总结时间每秒更新
-    if (nextSummarySecs > 0) {
-      nextSummarySecs--;
+      // 总结时间正向计时，随运行时长一起更新
       updateNextTime();
     }
   }, 1000);
