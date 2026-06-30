@@ -14,7 +14,7 @@ stream:
   live_url: "https://live.douyin.com/YOUR_ROOM_ID"
 
 whisper:
-  # API Key
+  # 小米 ASR API Key
   api_key: "your-api-key"
   # API 基础地址
   base_url: "https://api.xiaomimimo.com/v1"
@@ -24,12 +24,12 @@ whisper:
   language: "zh"
 
 summarize:
-  # DeepSeek API Key
-  api_key: "your-deepseek-api-key"
+  # 小米 API Key
+  api_key: "your-api-key"
   # API 基础地址
-  base_url: "https://api.deepseek.com/v1"
+  base_url: "https://api.xiaomimimo.com/v1"
   # 总结模型
-  model: "deepseek-v4-flash"
+  model: "mimo-v2.5-pro"
   # 总结间隔(秒)
   interval: 3600
   # 结束时是否生成完整总结
